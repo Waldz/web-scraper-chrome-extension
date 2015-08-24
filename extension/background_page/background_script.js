@@ -13,26 +13,27 @@ chrome.storage.onChanged.addListener(function () {
 });
 
 var sendToActiveTab = function(request, callback) {
-	chrome.tabs.query({
-		active: true,
-		currentWindow: true
-	}, function (tabs) {
-		if (tabs.length < 1) {
-			this.console.log("couldn't find active tab");
-		}
-		else {
-			var tab = tabs[0];
-			chrome.tabs.sendMessage(tab.id, request, callback);
-		}
-	});
-};
-
-chrome.runtime.onMessage.addListener(
-	function (request, sender, sendResponse) {
-
+		chrome.tabs.query({
+			active: true,
+			currentWindow: true
+		}, function (tabs) {
+			if (tabs.length < 1) {
+				this.console.log("couldn't find active tab");
+			}
+			else {
+				var tab = tabs[0];
+				chrome.tabs.sendMessage(tab.id, request, callback);
+			}
+		});
+	},
+	onMessageListener = function (request, sender, sendResponse) {
 		console.log("chrome.runtime.onMessage", request);
 
-		if (request.createSitemap) {
+		if (request.updateConfiguration) {
+			config.updateConfiguration(request.configuration);
+			sendResponse();
+			return true;
+		} else if (request.createSitemap) {
 			store.createSitemap(request.sitemap, sendResponse);
 			return true;
 		}
@@ -116,5 +117,6 @@ chrome.runtime.onMessage.addListener(
 
 			return true;
 		}
-	}
-);
+	};
+chrome.runtime.onMessage.addListener(onMessageListener);
+chrome.runtime.onMessageExternal.addListener(onMessageListener);
